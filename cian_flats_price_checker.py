@@ -22,7 +22,7 @@ def get_price(wks, row):
     s = requests.session()
     result = s.get(url)     # TODO check if it's there
     result = result.text
-    match1 = re.findall(marker, result)    #we are trying to find marker in "result"
+    match1 = re.findall(marker, result)    # we are trying to find marker in "result"
     if len(match1) == 1:
         return 'N/A'
 
@@ -50,7 +50,7 @@ def check_cian():
         wks.add_cols(1)
         row = wks.row_values(1)
         new_col = row.index('')
-    new_col += 1 # table starts from 1, but list starts from 0
+    new_col += 1  # table starts from 1, but list starts from 0
 
     # write new date
     wks.update_cell(1, new_col, time_get())
@@ -63,7 +63,7 @@ def check_cian():
         wks.add_rows(1)
         col = wks.col_values(1)
         last_raw = col.index('')
-    last_raw += 1 # table starts from 1, but list starts from 0
+    last_raw += 1  # table starts from 1, but list starts from 0
 
     # update prices
     for i in range(2, last_raw):
