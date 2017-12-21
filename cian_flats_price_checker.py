@@ -14,63 +14,62 @@ class CianChecker(object):
         self.sheet_name = spreadsheet_name
         self.credentials_file = credentials_file
 
-    def update_table(self):
         # get google authentication
         credentials = ServiceAccountCredentials.from_json_keyfile_name(self.credentials_file,
                                                                        ['https://spreadsheets.google.com/feeds'])
         gc = gspread.authorize(credentials)
 
         # Open a worksheet from spreadsheet with one shot
-        wks = gc.open(self.sheet_name).sheet1
+        self.wks = gc.open(self.sheet_name).sheet1
 
+        self.pattern_sold = r'Объявление снято с публикации'
+        self.patter_price = r'("offerPrice":)(\d{7,8}),'
+        self.pattern_captcha = r'captcha'
+
+    def update_table(self):
         # find last column
-        row = wks.row_values(1)
+        row = self.wks.row_values(1)
         try:
             new_col = row.index('')
         except ValueError:
-            wks.add_cols(1)
-            row = wks.row_values(1)
+            self.wks.add_cols(1)
+            row = self.wks.row_values(1)
             new_col = row.index('')
         new_col += 1  # table starts from 1, but list starts from 0
 
         # write new date
-        wks.update_cell(1, new_col, datetime.date.today())
+        self.wks.update_cell(1, new_col, datetime.date.today())
 
         # find last raw
-        col = wks.col_values(1)
+        col = self.wks.col_values(1)
         try:
             last_raw = col.index('')
         except ValueError:
-            wks.add_rows(1)
-            col = wks.col_values(1)
+            self.wks.add_rows(1)
+            col = self.wks.col_values(1)
             last_raw = col.index('')
         last_raw += 1  # table starts from 1, but list starts from 0
 
         # update prices
         for i in range(2, last_raw):
-            wks.update_cell(i, new_col, str(self.get_price(wks, i)))
+            self.wks.update_cell(i, new_col, str(self.get_price(i)))
 
-    def get_price(self, wks, row):
-        url = wks.cell(row, 1).value
-        marker = "Объявление снято с публикации"
+    def get_price(self, row):
+        url = self.wks.cell(row, 1).value
 
         # check ad availability
         s = requests.session()
         try:
-            result = s.get(url)
+            web_page = s.get(url).text
         except requests.exceptions.ConnectionError:
-            return 'broken link'
+            return 'Broken link'
 
-        result = result.text
-        match1 = re.findall(marker, result)    # we are trying to find marker in "result"
-        if len(match1) == 1:
+        if re.search(self.pattern_sold, web_page):
             return 'Sold'
 
         # get flat price
         try:
-            pattern = r'("offerPrice":)(\d{7,8}),'
-            match = re.search(pattern, result)
-            return match.group(2)
+            return re.search(self.patter_price, web_page).group(2)
         except AttributeError:
             return 'N/A'
 
