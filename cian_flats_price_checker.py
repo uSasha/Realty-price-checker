@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import gspread
-import json
 from oauth2client.service_account import ServiceAccountCredentials
 
 import datetime
@@ -28,35 +27,32 @@ class CianChecker(object):
 
     def update_table(self):
         # find last column
-        row = self.wks.row_values(1)
         try:
-            new_col = row.index('')
+            row = self.wks.row_values(1)
+            new_col = row.index('') + 1
         except ValueError:
             self.wks.add_cols(1)
             row = self.wks.row_values(1)
-            new_col = row.index('')
-        new_col += 1  # table starts from 1, but list starts from 0
+            new_col = row.index('') + 1
 
         # write new date
         self.wks.update_cell(1, new_col, datetime.date.today())
 
         # find last raw
-        col = self.wks.col_values(1)
         try:
-            last_raw = col.index('')
+            col = self.wks.col_values(1)
+            last_raw = col.index('') + 1
         except ValueError:
             self.wks.add_rows(1)
             col = self.wks.col_values(1)
-            last_raw = col.index('')
-        last_raw += 1  # table starts from 1, but list starts from 0
+            last_raw = col.index('') + 1
 
         # update prices
-        for i in range(2, last_raw):
-            self.wks.update_cell(i, new_col, str(self.get_price(i)))
+        for raw in range(2, last_raw):
+            url = self.wks.cell(row, 1).value
+            self.wks.update_cell(raw, new_col, str(self._get_price(url)))
 
-    def get_price(self, row):
-        url = self.wks.cell(row, 1).value
-
+    def _get_price(self, url):
         # check ad availability
         s = requests.session()
         try:
