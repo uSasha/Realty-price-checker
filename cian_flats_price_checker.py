@@ -7,8 +7,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 import datetime
 import requests
 import re
-from bs4 import BeautifulSoup
-from bs4 import SoupStrainer
 
 
 def time_get():
@@ -21,19 +19,22 @@ def get_price(wks, row):
 
     # check ad availability
     s = requests.session()
-    result = s.get(url)     # TODO check if it's there
+    try:
+        result = s.get(url)
+    except requests.exceptions.ConnectionError:
+        return 'broken link'
+
     result = result.text
     match1 = re.findall(marker, result)    # we are trying to find marker in "result"
     if len(match1) == 1:
         return 'Sold'
 
     # get flat price
-    only_tags_with_id_rur = SoupStrainer(id="price_rur")
-    s = BeautifulSoup(result, "html.parser", parse_only=only_tags_with_id_rur).prettify()
-
     try:
-        return re.findall(r'\d+', s)[0]   # get first number from string
-    except IndexError:
+        pattern = r'("offerPrice":)(\d{7,8}),'
+        match = re.search(pattern, result)
+        return match.group(2)
+    except AttributeError:
         return 'N/A'
 
 
