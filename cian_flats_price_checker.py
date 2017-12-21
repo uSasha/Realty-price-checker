@@ -32,19 +32,19 @@ class CianChecker(object):
         # write new date
         self.wks.update_cell(1, new_col, datetime.date.today())
 
-        # find last raw
+        # find last row
         try:
             col = self.wks.col_values(1)
-            last_raw = col.index('') + 1
+            last_row = col.index('') + 1
         except ValueError:
             self.wks.add_rows(1)
             col = self.wks.col_values(1)
-            last_raw = col.index('') + 1
+            last_row = col.index('') + 1
 
         # update prices
-        for raw in range(2, last_raw):
+        for row in range(2, last_row):
             url = self.wks.cell(row, 1).value
-            self.wks.update_cell(raw, new_col, str(self._get_price(url)))
+            self.wks.update_cell(row, new_col, str(self._get_price(url)))
 
     def _get_price(self, url):
         # check ad availability
