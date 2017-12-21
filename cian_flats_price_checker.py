@@ -2,7 +2,6 @@
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-
 import datetime
 import requests
 import re
@@ -10,20 +9,15 @@ import re
 
 class CianChecker(object):
     def __init__(self, spreadsheet_name, credentials_file):
-        self.sheet_name = spreadsheet_name
-        self.credentials_file = credentials_file
+        self.pattern_sold = r'Объявление снято с публикации'
+        self.pattern_price = r'("offerPrice":)(\d{7,8}),'
 
         # get google authentication
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(self.credentials_file,
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(credentials_file,
                                                                        ['https://spreadsheets.google.com/feeds'])
         gc = gspread.authorize(credentials)
-
         # Open a worksheet from spreadsheet with one shot
-        self.wks = gc.open(self.sheet_name).sheet1
-
-        self.pattern_sold = r'Объявление снято с публикации'
-        self.patter_price = r'("offerPrice":)(\d{7,8}),'
-        self.pattern_captcha = r'captcha'
+        self.wks = gc.open(spreadsheet_name).sheet1
 
     def update_table(self):
         # find last column
@@ -65,7 +59,7 @@ class CianChecker(object):
 
         # get flat price
         try:
-            return re.search(self.patter_price, web_page).group(2)
+            return re.search(self.pattern_price, web_page).group(2)
         except AttributeError:
             return 'N/A'
 
