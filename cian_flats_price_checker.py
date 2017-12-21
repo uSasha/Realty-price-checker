@@ -2,7 +2,8 @@
 
 import gspread
 import json
-from oauth2client.client import SignedJwtAssertionCredentials
+from oauth2client.service_account import ServiceAccountCredentials
+
 import datetime
 import requests
 import re
@@ -29,14 +30,16 @@ def get_price(wks, row):
     # get flat price
     only_tags_with_id_rur = SoupStrainer(id="price_rur")
     s = BeautifulSoup(result, "html.parser", parse_only=only_tags_with_id_rur).prettify()
+
+    print('price:', s, 'here')
     return re.findall(r'\d+', s)[0]   # get first number from string
 
 
 def check_cian():
     # get google authentication
-    json_key = json.load(open('My Project-c7aa42bbefd7.json'))
     scope = ['https://spreadsheets.google.com/feeds']
-    credentials = SignedJwtAssertionCredentials(json_key['client_email'], json_key['private_key'].encode(), scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('My Project-db502cd6c04d.json', scope)
+
     gc = gspread.authorize(credentials)
 
     # Open a worksheet from spreadsheet with one shot
@@ -71,5 +74,4 @@ def check_cian():
 
 
 check_cian()
-
-#
+print('done')
