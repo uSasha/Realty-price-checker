@@ -25,14 +25,16 @@ def get_price(wks, row):
     result = result.text
     match1 = re.findall(marker, result)    # we are trying to find marker in "result"
     if len(match1) == 1:
-        return 'N/A'
+        return 'Sold'
 
     # get flat price
     only_tags_with_id_rur = SoupStrainer(id="price_rur")
     s = BeautifulSoup(result, "html.parser", parse_only=only_tags_with_id_rur).prettify()
 
-    print('price:', s, 'here')
-    return re.findall(r'\d+', s)[0]   # get first number from string
+    try:
+        return re.findall(r'\d+', s)[0]   # get first number from string
+    except IndexError:
+        return 'N/A'
 
 
 def check_cian():
